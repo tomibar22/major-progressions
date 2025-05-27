@@ -1011,23 +1011,45 @@
 
         // Touch/swipe support
         let touchStartX = 0;
+        let touchStartY = 0;
         let touchEndX = 0;
+        let touchEndY = 0;
+        let touchStartTime = 0;
 
         document.addEventListener('touchstart', (e) => {
             touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+            touchStartTime = Date.now();
         });
 
         document.addEventListener('touchend', (e) => {
             touchEndX = e.changedTouches[0].screenX;
+            touchEndY = e.changedTouches[0].screenY;
             handleSwipe();
         });
 
         function handleSwipe() {
-            const swipeThreshold = 50;
-            const diff = touchStartX - touchEndX;
+            const swipeThreshold = 80; // Increased threshold for more intentional swipes
+            const maxSwipeTime = 500; // Maximum time for a swipe (ms)
+            const minSwipeSpeed = 0.3; // Minimum speed (pixels per ms)
             
-            if (Math.abs(diff) > swipeThreshold) {
-                if (diff > 0) {
+            const diffX = touchStartX - touchEndX;
+            const diffY = touchStartY - touchEndY;
+            const swipeTime = Date.now() - touchStartTime;
+            const swipeSpeed = Math.abs(diffX) / swipeTime;
+            
+            // Only trigger navigation if:
+            // 1. Horizontal movement is above threshold
+            // 2. Horizontal movement is greater than vertical (not a scroll)
+            // 3. Swipe was fast enough and not too slow
+            // 4. Not in random mode (where arrows are disabled anyway)
+            if (Math.abs(diffX) > swipeThreshold && 
+                Math.abs(diffX) > Math.abs(diffY) * 1.5 && 
+                swipeTime < maxSwipeTime && 
+                swipeSpeed > minSwipeSpeed &&
+                !isRandomMode) {
+                
+                if (diffX > 0) {
                     nextSection(); // Swipe left = next
                 } else {
                     prevSection(); // Swipe right = previous
